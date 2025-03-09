@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="eo">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esperanto Programlingvo</title>
+    <style>
+        body { font-family: 'Poppins', sans-serif; margin: 0; padding: 20px; background: #181818; color: #ffffff; display: flex; flex-direction: column; align-items: center; }
+        h1 { color: #00c896; }
+        textarea { width: 80%; height: 150px; background: #222; color: #ffffff; border: 1px solid #444; border-radius: 8px; padding: 10px; font-size: 16px; }
+        button { margin-top: 10px; background: #00c896; color: white; border: none; padding: 10px 20px; cursor: pointer; font-size: 16px; border-radius: 5px; transition: 0.3s; }
+        button:hover { background: #00a87a; }
+        pre { background: #222; padding: 15px; border-radius: 8px; color: #ffffff; width: 80%; min-height: 50px; font-size: 16px; }
+        input { background: #222; color: #ffffff; border: 1px solid #444; padding: 8px; margin-top: 10px; border-radius: 5px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h1>Esperanto Programlingvo</h1>
+    <textarea id="code" placeholder="Skribu vian kodon ĉi tie..."></textarea>
+    <button onclick="runCode()">Ruli Kodon</button>
+    <pre id="output"></pre>
+
+    <script>
+        function tokenize(code) {
+            return code.match(/(funkcio|redonu|entjero|cxeno|se|alie|dum|por|montri|enigi|=|\+|\w+|\d+|".*?"|[=+\-*/(){};])/g);
+        }
+
+        function parse(tokens) {
+            return tokens;
+        }
+
+        async function interpret(ast) {
+            let output = "";
+            let env = {};
+            for (let i = 0; i < ast.length; i++) {
+                if (ast[i] === "cxeno" && ast[i + 2] === "=" && ast[i + 3] === "enigi") {
+                    let varName = ast[i + 1];
+                    let userInput = await getUserInput("Entajpu valoron por " + varName + ":");
+                    env[varName] = userInput;
+                    i += 3;
+                } else if (ast[i] === "montri") {
+                    let msg = "";
+                    i++;
+                    while (i < ast.length && ast[i] !== ";") {
+                        let token = ast[i];
+                        if (token === "+") {
+                            i++;
+                            continue;
+                        }
+                        if (token.startsWith("\"")) {
+                            msg += token.replace(/\"/g, '');
+                        } else if (env[token] !== undefined) {
+                            msg += env[token];
+                        } else {
+                            msg += token;
+                        }
+                        i++;
+                    }
+                    output += msg + "\n";
+                }
+            }
+            document.getElementById("output").innerText = output;
+        }
+
+        function getUserInput(promptText) {
+            return new Promise(resolve => {
+                let inputField = document.createElement("input");
+                inputField.type = "text";
+                inputField.placeholder = promptText;
+                document.body.appendChild(inputField);
+                inputField.focus();
+                inputField.addEventListener("keypress", function(event) {
+                    if (event.key === "Enter") {
+                        resolve(inputField.value);
+                        document.body.removeChild(inputField);
+                    }
+                });
+            });
+        }
+
+        async function runCode() {
+            let code = document.getElementById("code").value;
+            let tokens = tokenize(code);
+            let ast = parse(tokens);
+            await interpret(ast);
+        }
+    </script>
+</body>
+</html>
